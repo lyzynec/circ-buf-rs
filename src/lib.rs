@@ -95,6 +95,14 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
     return unsafe { Some(self.data.get_unchecked_mut(self.first)) };
   }
 
+  pub unsafe fn first_unchecked(&self) -> &T {
+    return self.data.get_unchecked(self.first);
+  }
+
+  pub unsafe fn first_unchecked_mut(&mut self) -> &mut T {
+    return self.data.get_unchecked_mut(self.first);
+  }
+
 }
 
 // last
@@ -112,6 +120,16 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
     return unsafe { Some(self.data.get_unchecked_mut(index)) };
   }
 
+  pub unsafe fn last_unchecked(&self) -> &T {
+    let index = capped_add(self.first, self.len-1, S);
+    return self.data.get_unchecked(index);
+  }
+
+  pub unsafe fn last_unchecked_mut(&mut self) -> &mut T {
+    let index = capped_add(self.first, self.len-1, S);
+    return self.data.get_unchecked_mut(index);
+  }
+
 }
 
 // get
@@ -127,6 +145,16 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
     if index >= self.len { return None }
     let index = capped_add(self.first, index, S);
     return unsafe { Some(self.data.get_unchecked_mut(index)) };
+  }
+
+  pub unsafe fn get_unchecked(&self, index: usize) -> &T {
+    let index = capped_add(self.first, index, S);
+    return self.data.get_unchecked(index);
+  }
+
+  pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+    let index = capped_add(self.first, index, S);
+    return self.data.get_unchecked_mut(index);
   }
 
 }
