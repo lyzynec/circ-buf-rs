@@ -14,8 +14,9 @@ pub enum CircBufError {
   BufferEmpty,
 }
 
+// new
 impl<T: Copy, const S: usize> CircBuf<T, S> {
-  
+
   pub fn new(initial: T) -> CircBuf<T, S> {
     return CircBuf {
       first: 0,
@@ -24,6 +25,11 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
       data: [initial; S],
     };
   }
+
+}
+
+// push
+impl<T: Copy, const S: usize> CircBuf<T, S> {
 
   pub fn push_back(&mut self, new: T) -> Result<(), CircBufError> {
 
@@ -47,6 +53,11 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
     return Ok(());
   }
 
+}
+
+// pop
+impl<T: Copy, const S: usize> CircBuf<T, S> {
+  
   pub fn pop_back(&mut self) -> Result<T, CircBufError> {
 
     if self.len < 1 { return Result::Err(CircBufError::BufferEmpty) }
@@ -69,24 +80,66 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
     return Ok(out);
   }
 
-  pub fn get_index(&self, index: usize) -> Option<&T> {
+}
+
+// first
+impl<T: Copy, const S: usize> CircBuf<T, S> {
+
+  pub fn first(&self) -> Option<&T> {
+    if self.len < 1 { return None }
+    return unsafe { Some(self.data.get_unchecked(self.first)) };
+  }
+
+  pub fn first_mut(&mut self) -> Option<&mut T> {
+    if self.len < 1 { return None }
+    return unsafe { Some(self.data.get_unchecked_mut(self.first)) };
+  }
+
+}
+
+// last
+impl<T: Copy, const S: usize> CircBuf<T, S> {
+
+  pub fn last(&self) -> Option<&T> {
+    if self.len < 1 { return None }
+    let index = capped_add(self.first, self.len-1, S);
+    return unsafe { Some(self.data.get_unchecked(index)) };
+  }
+
+  pub fn last_mut(&mut self) -> Option<&mut T> {
+    if self.len < 1 { return None }
+    let index = capped_add(self.first, self.len-1, S);
+    return unsafe { Some(self.data.get_unchecked_mut(index)) };
+  }
+
+}
+
+// get
+impl<T: Copy, const S: usize> CircBuf<T, S> {
+
+  pub fn get(&self, index: usize) -> Option<&T> {
     if index >= self.len { return None }
     let index = capped_add(self.first, index, S);
     return unsafe { Some(self.data.get_unchecked(index)) };
   }
 
-  pub fn get_index_mut(&mut self, index: usize) -> Option<&mut T>{
+  pub fn get_mut(&mut self, index: usize) -> Option<&mut T>{
     if index >= self.len { return None }
     let index = capped_add(self.first, index, S);
     return unsafe { Some(self.data.get_unchecked_mut(index)) };
   }
+
+}
+
+// slices
+impl<T: Copy, const S: usize> CircBuf<T, S> {
 
   pub fn get_sorted_slices(&self) -> (&[T], &[T]) {
     let (first, second) = self.data.split_at(self.first);
     return (second, first);
   }
 
-  pub fn get_as_slice(&self) -> (usize, [T; S]) {
+  pub fn as_slice(&self) -> (usize, [T; S]) {
     let (first, second) = self.get_sorted_slices();
     let mut out = [self.initial; S];
     out[0..first.len()].copy_from_slice(first);
@@ -94,6 +147,11 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
 
     return (self.len, out);
   }
+
+}
+
+// misc
+impl<T: Copy, const S: usize> CircBuf<T, S> {
 
   #[inline]
   pub fn len(&self) -> usize {
@@ -146,7 +204,7 @@ fn main_test() {
   a.push_back(4).unwrap();
   a.pop_front().unwrap();
   a.push_back(5).unwrap();
-  assert_eq!(a.get_as_slice(), (4, [2, 3, 4, 5]));
+  assert_eq!(a.as_slice(), (4, [2, 3, 4, 5]));
 
   a.pop_back().unwrap();
   assert_eq!(a.len(), 3);
