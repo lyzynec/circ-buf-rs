@@ -8,12 +8,6 @@ pub struct CircBuf<T: Copy, const S: usize> {
   data: [T; S],
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum CircBufError {
-  BufferFull,
-  BufferEmpty,
-}
-
 // new
 impl<T: Copy, const S: usize> CircBuf<T, S> {
 
@@ -31,9 +25,9 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
 // push
 impl<T: Copy, const S: usize> CircBuf<T, S> {
 
-  pub fn push_back(&mut self, new: T) -> Result<(), CircBufError> {
+  pub fn push_back(&mut self, new: T) -> Result<(), ()> {
 
-    if self.len >= S { return Result::Err(CircBufError::BufferFull); }
+    if self.len >= S { return Result::Err(()); }
 
     let index = capped_add(self.first, self.len, S);
     self.data[index] = new;
@@ -42,9 +36,9 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
     return Ok(());
   }
 
-  pub fn push_front(&mut self, new: T) -> Result<(), CircBufError> {
+  pub fn push_front(&mut self, new: T) -> Result<(), ()> {
 
-    if self.len >= S { return Result::Err(CircBufError::BufferFull); }
+    if self.len >= S { return Result::Err(()); }
 
     self.first = capped_sub(self.first, 1, S);
 
@@ -53,31 +47,56 @@ impl<T: Copy, const S: usize> CircBuf<T, S> {
     return Ok(());
   }
 
+  pub unsafe fn push_back_unchecked(&mut self, new: T) {
+    let index = capped_add(self.first, self.len, S);
+    self.data[index] = new;
+    self.len += 1;
+  }
+
+  pub unsafe fn push_front_unchecked(&mut self, new: T) {
+    self.first = capped_sub(self.first, 1, S);
+    self.data[self.first] = new;
+    self.len += 1;
+  }
+
 }
 
 // pop
 impl<T: Copy, const S: usize> CircBuf<T, S> {
   
-  pub fn pop_back(&mut self) -> Result<T, CircBufError> {
+  pub fn pop_back(&mut self) -> Option<T> {
 
-    if self.len < 1 { return Result::Err(CircBufError::BufferEmpty) }
+    if self.len < 1 { return None }
     self.len -= 1;
     let index = capped_add(self.first, self.len, S);
 
     let out = self.data[index];
 
-    return Ok(out);
+    return Some(out);
   }
 
-  pub fn pop_front(&mut self) -> Result<T, CircBufError> {
+  pub fn pop_front(&mut self) -> Option<T> {
 
-    if self.len < 1 { return Result::Err(CircBufError::BufferEmpty) }
+    if self.len < 1 { return None }
 
     let out = self.data[self.first];
     self.first = capped_add(self.first, 1, S);
     self.len -= 1;
 
-    return Ok(out);
+    return Some(out);
+  }
+
+  pub unsafe fn pop_back_unchecked(&mut self) -> T {
+    self.len -= 1;
+    let index = capped_add(self.first, self.len, S);
+    return self.data[index];
+  }
+
+  pub unsafe fn pop_front_unchecked(&mut self) -> T {
+    let out = self.data[self.first];
+    self.first = capped_add(self.first, 1, S);
+    self.len -= 1;
+    return out;
   }
 
 }
